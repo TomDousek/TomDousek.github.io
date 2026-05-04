@@ -90,6 +90,34 @@
         </div>
     </section>
 
+    <section style="margin-top: 40px;">
+        <h2>6. How it works (Technical Summary)</h2>
+        <div class="card">
+            <p>Here is a quick breakdown of what is happening "under the hood" for those interested in the technical side of my solution.</p>
+            
+            <h3>Why not just use standard video compression?</h3>
+            <p>My first instinct was to use <strong>FFmpeg</strong>. I managed to shrink the 37 MB video down to just a few hundred KB, but the quality was terrible. The high compression created blocky artifacts that lacked the texture <strong>PoseNet</strong> needs to work correctly and also the block edges were hard to remove by learned Enhancer. That is why I pivoted to building a custom neural reconstruction system.</p>
+
+            <h3>The Generator Architecture</h3>
+            <p>I designed a <strong>Generator</strong> network with roughly 110,000 parameters. It is quite small because the model size itself counts towards the final score. It consists of three main parts:</p>
+            <ul>
+                <li><strong>MaskEncoder:</strong> This part takes the segmentation mask and turns it into abstract feature maps. I used <em>embedding layers</em> so the model can learn that things like "road" and "lanes" are semantically related.</li>
+                <li><strong>MLP:</strong> A tiny network that processes the movement vectors (poses) and tells the generator how to "shift" the visuals based on the car's motion.</li>
+                <li><strong>FrameHead:</strong> The final stage that puts everything together and outputs the video in 6-channel YUV format.</li>
+            </ul>
+
+            <h3>Optimization Tricks</h3>
+            <p>To keep the model size tiny while maintaining quality, I used several "cheap" neural tricks:</p>
+            <ul>
+                <li><strong>Separable Convolutions:</strong> Instead of standard convolutions, I used <em>depth-wise separable</em> ones. They do almost the same job but with about 10x fewer parameters.</li>
+                <li><strong>Attention Mechanisms:</strong> I added <em>Squeeze-Excitation</em> and <em>Pixel Attention</em> blocks. These help the model focus on what is important (like road edges) and ignore the noise.</li>
+                <li><strong>Quantization:</strong> I saved the model weights as <strong>8-bit integers</strong> instead of 32-bit floats. This significantly cut down the file size without hurting the performance too much. In future work, I would use Quantization Aware Training to make the model more robust to the precision reduction in int8 quantizatin.</li>
+            </ul>
+
+            <p>In the end, while the video looks a bit like a neon game from the 80s, it was highly effective for the challenge. I managed to get score of 0.72 and secure 9th place out of 30 participants at the time of my submission, which I'm pretty happy with!</p>
+        </div>
+    </section>
+
     <div class="footer">
         Part of my bachelor thesis &copy; 2026 | Developed for comma.ai video compression challenge
     </div>
